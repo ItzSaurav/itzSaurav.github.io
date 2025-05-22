@@ -2,36 +2,37 @@ name: Update Daily AI News
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # every day at 6 AM UTC
-  workflow_dispatch:       # manual trigger support
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   update-news:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
 
-    - name: Install dependencies
-      run: pip install feedparser
+      - name: Install dependencies
+        run: pip install feedparser
 
-    - name: Run news fetch script
-      run: python scripts/fetch_news.py
+      - name: Run news fetch script
+        run: python scripts/fetch_news.py
 
-    - name: Commit and push changes
-      env:
-        GH_PAT: ${{ secrets.GH_PAT }}
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git add index.html
-        git commit -m "Auto-update AI news" || echo "No changes to commit"
-        git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git HEAD:main
+      - name: Commit and push changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git commit -m "Auto-update AI news" || echo "No changes to commit"
+          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git HEAD:main
+
