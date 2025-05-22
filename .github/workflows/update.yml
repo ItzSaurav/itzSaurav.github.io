@@ -26,6 +26,7 @@ jobs:
         python scripts/fetch_news.py
 
     - name: Check GH_PAT secret
+      shell: bash
       run: echo "Token length: ${#GH_PAT}"
       env:
         GH_PAT: ${{ secrets.GH_PAT }}
