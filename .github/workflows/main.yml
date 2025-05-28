@@ -2,14 +2,15 @@ name: Fetch Daily AI News (Free)
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight UTC
+    # Runs daily at 00:00 UTC (midnight). Adjust as needed.
+    - cron: '0 0 * * *'
   workflow_dispatch: # Allows manual triggering from GitHub Actions tab
 
 jobs:
   update-news:
     runs-on: ubuntu-latest
-    permissions: # <--- ADD THIS BLOCK
-      contents: write # <--- AND THIS LINE
+    permissions:
+      contents: write # Make sure this is still here!
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,12 +22,18 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install requests beautifulsoup4 lxml
+          pip install requests # <--- Only 'requests' is needed now for API calls
+          # Remove or comment out 'beautifulsoup4' and 'lxml' if they were there
+          # pip install beautifulsoup4 lxml
 
       - name: Run scraper and generate news.json
+        env:
+          # THIS IS THE CRUCIAL LINE: Passes the secret to your script
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
         run: python scraper.py
 
       - name: Commit and push changes
+        # This step will only commit if news.json has actually changed
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
