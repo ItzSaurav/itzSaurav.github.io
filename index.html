@@ -1,1 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily AI Insights - Your Automated AI News Digest</title>
+    <meta name="description" content="Stay updated with the latest in Artificial Intelligence news, automatically curated daily.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-content">
+            <h1>Daily AI Insights</h1>
+            <p>Your automated digest of the latest in Artificial Intelligence news.</p>
+        </div>
+    </header>
 
+    <main class="news-main">
+        <section class="news-feed">
+            <h2 class="section-title">Today's Top AI News</h2>
+            <div id="news-container" class="news-grid">
+                <p class="loading-message">Loading the latest AI news... Please wait.</p>
+            </div>
+            <div id="error-message" class="error-message" style="display: none;">
+                <p>Oops! Something went wrong loading the news. Please check back later or try refreshing.</p>
+                <p>If the issue persists, the news sources might have updated their structure.</p>
+            </div>
+            <div id="no-news-message" class="no-news-message" style="display: none;">
+                <p>No new AI articles found for today. Check back tomorrow!</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; <span id="current-year"></span> Daily AI Insights. Powered by <a href="https://github.com/itzSaurav/itzSaurav.github.io" target="_blank" rel="noopener noreferrer">GitHub Pages</a>.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
