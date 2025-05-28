@@ -2,15 +2,14 @@ name: Fetch Daily AI News (Free)
 
 on:
   schedule:
-    # Runs daily at 00:00 UTC (midnight). Adjust as needed.
-    # This is 5:30 AM IST (India Standard Time) if you're in Bengaluru.
-    # Use https://crontab.guru/ for help with cron expressions if you want a different time.
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
   workflow_dispatch: # Allows manual triggering from GitHub Actions tab
 
 jobs:
   update-news:
     runs-on: ubuntu-latest
+    permissions: # <--- ADD THIS BLOCK
+      contents: write # <--- AND THIS LINE
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,13 +21,12 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install requests beautifulsoup4 lxml # lxml for faster parsing
+          pip install requests beautifulsoup4 lxml
 
       - name: Run scraper and generate news.json
         run: python scraper.py
 
       - name: Commit and push changes
-        # This step will only commit if news.json has actually changed
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -36,4 +34,4 @@ jobs:
           git diff --staged --quiet || git commit -m "🤖 Daily AI News Update: $(date +%Y-%m-%d)"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
