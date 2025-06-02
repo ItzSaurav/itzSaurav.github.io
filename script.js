@@ -1,148 +1,233 @@
+// Typing animation
+const typedTextSpan = document.querySelector(".typed-text");
+const cursorSpan = document.querySelector(".cursor");
+
+const textArray = ["Developer", "AI Enthusiast", "Problem Solver", "Tech Explorer"];
+const typingDelay = 100;
+const erasingDelay = 50;
+const newTextDelay = 2000;
+let textArrayIndex = 0;
+let charIndex = 0;
+
+function type() {
+    if (charIndex < textArray[textArrayIndex].length) {
+        if (!cursorSpan.classList.contains("typing")) cursorSpan.classList.add("typing");
+        typedTextSpan.textContent += textArray[textArrayIndex].charAt(charIndex);
+        charIndex++;
+        setTimeout(type, typingDelay);
+    } else {
+        cursorSpan.classList.remove("typing");
+        setTimeout(erase, newTextDelay);
+    }
+}
+
+function erase() {
+    if (charIndex > 0) {
+        if (!cursorSpan.classList.contains("typing")) cursorSpan.classList.add("typing");
+        typedTextSpan.textContent = textArray[textArrayIndex].substring(0, charIndex - 1);
+        charIndex--;
+        setTimeout(erase, erasingDelay);
+    } else {
+        cursorSpan.classList.remove("typing");
+        textArrayIndex++;
+        if (textArrayIndex >= textArray.length) textArrayIndex = 0;
+        setTimeout(type, typingDelay + 1100);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-    const newsContainer = document.getElementById("news-container");
-    const loadingMessage = document.querySelector(".loading-message");
-    const errorMessage = document.getElementById("error-message");
-    const noNewsMessage = document.getElementById("no-news-message");
-    let lastFetchTime = null;
-    const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    if (textArray.length) setTimeout(type, newTextDelay + 250);
+});
 
-    // Set current year in footer
-    document.getElementById("current-year").textContent = new Date().getFullYear();
+// Theme toggle
+const themeToggle = document.querySelector('.theme-toggle');
+themeToggle.addEventListener('click', () => {
+    document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+    themeToggle.querySelector('i').classList.toggle('fa-moon');
+    themeToggle.querySelector('i').classList.toggle('fa-sun');
+});
 
-    // Function to hide all messages
-    function hideAllMessages() {
-        if (loadingMessage) loadingMessage.style.display = 'none';
-        if (errorMessage) errorMessage.style.display = 'none';
-        if (noNewsMessage) noNewsMessage.style.display = 'none';
-    }
-
-    // Function to show a specific message
-    function showMessage(element) {
-        hideAllMessages();
-        if (element) element.style.display = 'block';
-    }
-
-    // Function to format relative time
-    function getRelativeTime(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-        
-        if (diffInSeconds < 60) return 'just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-
-    // Function to create article element
-    function createArticleElement(article) {
-        const articleDiv = document.createElement("div");
-        articleDiv.classList.add("news-article");
-
-        const articleContent = document.createElement("div");
-        articleContent.classList.add("article-content");
-
-        const title = document.createElement("h3");
-        title.classList.add("article-title");
-        const link = document.createElement("a");
-        link.href = article.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = article.title || "No Title Available";
-        title.appendChild(link);
-        articleContent.appendChild(title);
-
-        if (article.description) {
-            const description = document.createElement("p");
-            description.classList.add("article-description");
-            description.textContent = article.description;
-            articleContent.appendChild(description);
-        }
-
-        const meta = document.createElement("p");
-        meta.classList.add("article-meta");
-        
-        const sourceSpan = document.createElement("span");
-        sourceSpan.textContent = article.source ? `Source: ${article.source}` : '';
-        
-        const timeSpan = document.createElement("span");
-        timeSpan.textContent = article.publishedAt ? getRelativeTime(article.publishedAt) : 'Date N/A';
-        
-        meta.appendChild(sourceSpan);
-        meta.appendChild(timeSpan);
-        articleContent.appendChild(meta);
-
-        articleDiv.appendChild(articleContent);
-        return articleDiv;
-    }
-
-    // Function to fetch and display news
-    async function fetchAndDisplayNews() {
-        try {
-            showMessage(loadingMessage);
-            const response = await fetch("news.json");
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            hideAllMessages();
-
-            if (data && data.length > 0) {
-                newsContainer.innerHTML = '';
-                data.forEach(article => {
-                    const articleElement = createArticleElement(article);
-                    newsContainer.appendChild(articleElement);
-                });
-            } else {
-                showMessage(noNewsMessage);
-            }
-            
-            lastFetchTime = new Date();
-        } catch (error) {
-            console.error("Error fetching or parsing news:", error);
-            showMessage(errorMessage);
-            newsContainer.innerHTML = '';
-        }
-    }
-
-    // Initial fetch
-    fetchAndDisplayNews();
-
-    // Set up periodic refresh
-    setInterval(() => {
-        if (!lastFetchTime || (new Date() - lastFetchTime) >= REFRESH_INTERVAL) {
-            fetchAndDisplayNews();
-        }
-    }, REFRESH_INTERVAL);
-
-    // Add refresh button functionality
-    const refreshButton = document.createElement("button");
-    refreshButton.classList.add("refresh-button");
-    refreshButton.innerHTML = "🔄 Refresh News";
-    refreshButton.addEventListener("click", fetchAndDisplayNews);
-    document.querySelector(".section-title").appendChild(refreshButton);
-
-    // Add smooth scroll to top button
-    const scrollButton = document.createElement("button");
-    scrollButton.classList.add("scroll-top-button");
-    scrollButton.innerHTML = "↑";
-    scrollButton.style.display = "none";
-    document.body.appendChild(scrollButton);
-
-    window.addEventListener("scroll", () => {
-        if (window.pageYOffset > 300) {
-            scrollButton.style.display = "block";
-        } else {
-            scrollButton.style.display = "none";
-        }
-    });
-
-    scrollButton.addEventListener("click", () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
+// Smooth scrolling
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
         });
     });
+});
+
+// Active navigation
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= sectionTop - 200) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').slice(1) === current) {
+            link.classList.add('active');
+        }
+    });
+});
+
+// News loading and filtering
+let newsData = [];
+let currentPage = 1;
+const itemsPerPage = 6;
+
+async function loadNews() {
+    try {
+        const response = await fetch('news.json');
+        newsData = await response.json();
+        displayNews();
+    } catch (error) {
+        console.error('Error loading news:', error);
+        document.getElementById('newsGrid').innerHTML = `
+            <div class="error-message">
+                <p>Unable to load news at this time. Please try again later.</p>
+            </div>
+        `;
+    }
+}
+
+function displayNews(filteredData = newsData) {
+    const newsGrid = document.getElementById('newsGrid');
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+
+    if (paginatedData.length === 0) {
+        newsGrid.innerHTML = `
+            <div class="no-news-message">
+                <p>No news articles found.</p>
+            </div>
+        `;
+        return;
+    }
+
+    newsGrid.innerHTML = paginatedData.map(article => `
+        <div class="news-card fade-in">
+            <div class="news-card-content">
+                <h3>${article.title}</h3>
+                <p>${article.description}</p>
+                <div class="meta">
+                    <span>${article.source}</span>
+                    <span>${new Date(article.publishedAt).toLocaleDateString()}</span>
+                </div>
+                <a href="${article.url}" target="_blank" class="btn secondary">Read More</a>
+            </div>
+        </div>
+    `).join('');
+
+    updatePagination(filteredData.length);
+}
+
+function updatePagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages;
+}
+
+// News filtering
+const searchInput = document.getElementById('newsSearch');
+const filterButtons = document.querySelectorAll('.news-filters .filter-btn');
+
+searchInput.addEventListener('input', filterNews);
+filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        filterNews();
+    });
+});
+
+function filterNews() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const activeFilter = document.querySelector('.news-filters .filter-btn.active').dataset.filter;
+
+    const filteredData = newsData.filter(article => {
+        const matchesSearch = article.title.toLowerCase().includes(searchTerm) ||
+                            article.description.toLowerCase().includes(searchTerm);
+        const matchesFilter = activeFilter === 'all' || article.source.toLowerCase().includes(activeFilter);
+        return matchesSearch && matchesFilter;
+    });
+
+    currentPage = 1;
+    displayNews(filteredData);
+}
+
+// Pagination
+document.getElementById('prevPage').addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        displayNews();
+    }
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+    const totalPages = Math.ceil(newsData.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        displayNews();
+    }
+});
+
+// Project filtering
+const projectFilters = document.querySelectorAll('.project-filters .filter-btn');
+projectFilters.forEach(button => {
+    button.addEventListener('click', () => {
+        projectFilters.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        filterProjects(button.dataset.filter);
+    });
+});
+
+function filterProjects(category) {
+    const projects = document.querySelectorAll('.project-card');
+    projects.forEach(project => {
+        if (category === 'all' || project.dataset.category === category) {
+            project.style.display = 'block';
+        } else {
+            project.style.display = 'none';
+        }
+    });
+}
+
+// Form handling
+const contactForm = document.getElementById('contactForm');
+contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        message: document.getElementById('message').value
+    };
+
+    // Here you would typically send the form data to a server
+    console.log('Form submitted:', formData);
+    
+    // Show success message
+    contactForm.innerHTML = `
+        <div class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <h3>Message Sent!</h3>
+            <p>Thank you for reaching out. I'll get back to you soon.</p>
+        </div>
+    `;
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadNews();
 });

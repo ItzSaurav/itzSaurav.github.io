@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily AI Insights - Your Automated AI News Digest</title>
-    <meta name="description" content="Stay updated with the latest in Artificial Intelligence news, automatically curated daily.">
+    <title>Saurav's Portfolio</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Primary Meta Tags -->
 <meta name="title" content="ItzSaurav Portfolio">
 <meta name="description" content="Personal portfolio and project showcase for ItzSaurav.">
@@ -28,32 +27,155 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-    <header class="site-header">
-        <div class="header-content">
-            <h1>Daily AI Insights</h1>
-            <p>Your automated digest of the latest in Artificial Intelligence news.</p>
-        </div>
-    </header>
+    <div class="container">
+        <header>
+            <nav>
+                <div class="logo">Saurav</div>
+                <div class="nav-links">
+                    <a href="#about" class="active">About</a>
+                    <a href="#projects">Projects</a>
+                    <a href="#news">AI News</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </nav>
+        </header>
 
-    <main class="news-main">
-        <section class="news-feed">
-            <h2 class="section-title">Today's Top AI News</h2>
-            <div id="news-container" class="news-grid">
-                <p class="loading-message">Loading the latest AI news... Please wait.</p>
+        <section id="hero" class="hero">
+            <div class="hero-content">
+                <h1>Hi, I'm Saurav</h1>
+                <p class="typing-text">I'm a <span class="typed-text"></span><span class="cursor">&nbsp;</span></p>
+                <div class="hero-buttons">
+                    <a href="#projects" class="btn primary">View Projects</a>
+                    <a href="#contact" class="btn secondary">Contact Me</a>
+                </div>
+                <div class="social-links">
+                    <a href="https://github.com/ItzSaurav" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://linkedin.com/in/itzsaurav" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://twitter.com/itzsaurav" target="_blank"><i class="fab fa-twitter"></i></a>
+                </div>
             </div>
-            <div id="error-message" class="error-message" style="display: none;">
-                <p>Oops! Something went wrong loading the news. Please check back later or try refreshing.</p>
-                <p>If the issue persists, the news sources might have updated their structure.</p>
-            </div>
-            <div id="no-news-message" class="no-news-message" style="display: none;">
-                <p>No new AI articles found for today. Check back tomorrow!</p>
+            <div class="scroll-indicator">
+                <div class="mouse">
+                    <div class="wheel"></div>
+                </div>
+                <div class="arrow">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
         </section>
-    </main>
 
-    <footer class="site-footer">
-        <p>&copy; <span id="current-year"></span> Daily AI Insights. Powered by <a href="https://github.com/itzSaurav/itzSaurav.github.io" target="_blank" rel="noopener noreferrer">GitHub Pages</a>.</p>
-    </footer>
+        <section id="about" class="about">
+            <h2>About Me</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>I'm a passionate developer and AI enthusiast, constantly exploring the intersection of technology and innovation.</p>
+                    <div class="skills">
+                        <h3>Skills</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Python</span>
+                            <span class="skill-tag">JavaScript</span>
+                            <span class="skill-tag">AI/ML</span>
+                            <span class="skill-tag">Web Development</span>
+                            <span class="skill-tag">Data Science</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="projects">
+            <h2>Featured Projects</h2>
+            <div class="project-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="web">Web</button>
+                <button class="filter-btn" data-filter="ai">AI</button>
+                <button class="filter-btn" data-filter="other">Other</button>
+            </div>
+            <div class="project-grid">
+                <!-- Project cards will be dynamically added here -->
+            </div>
+        </section>
+
+        <section id="news" class="news">
+            <h2>Latest AI News</h2>
+            <div class="news-controls">
+                <div class="search-box">
+                    <input type="text" id="newsSearch" placeholder="Search news...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="news-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="research">Research</button>
+                    <button class="filter-btn" data-filter="industry">Industry</button>
+                    <button class="filter-btn" data-filter="startups">Startups</button>
+                </div>
+            </div>
+            <div class="news-grid" id="newsGrid">
+                <!-- News cards will be dynamically added here -->
+            </div>
+            <div class="news-pagination">
+                <button id="prevPage" class="btn secondary"><i class="fas fa-chevron-left"></i></button>
+                <span id="pageInfo">Page 1</span>
+                <button id="nextPage" class="btn secondary"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <h2>Get in Touch</h2>
+            <div class="contact-content">
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <input type="text" id="name" required>
+                        <label for="name">Name</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="email" required>
+                        <label for="email">Email</label>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="message" required></textarea>
+                        <label for="message">Message</label>
+                    </div>
+                    <button type="submit" class="btn primary">Send Message</button>
+                </form>
+                <div class="contact-info">
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <p>email@example.com</p>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>Location, Country</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-logo">Saurav</div>
+                <div class="footer-links">
+                    <a href="#about">About</a>
+                    <a href="#projects">Projects</a>
+                    <a href="#news">News</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-social">
+                    <a href="https://github.com/ItzSaurav" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://linkedin.com/in/itzsaurav" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://twitter.com/itzsaurav" target="_blank"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Saurav. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>
