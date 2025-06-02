@@ -80,10 +80,31 @@ window.addEventListener('scroll', () => {
 });
 
 // News Loading and Filtering
-async function loadNews() {
+async function loadNews(retryCount = 0) {
+    const maxRetries = 3;
+    const newsGrid = document.getElementById('newsGrid');
+    
     try {
+        // Show loading state
+        newsGrid.innerHTML = `
+            <div class="news-loading">
+                <div class="loading"></div>
+                <p>Loading latest news...</p>
+            </div>
+        `;
+
         const response = await fetch('ai_news.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        
+        // Check if we have valid data
+        if (!data || !data.articles || data.status === 'error') {
+            throw new Error('Invalid news data received');
+        }
+        
         const articles = data.articles || [];
         
         // Update last updated time
@@ -94,17 +115,57 @@ async function loadNews() {
             <span>Last updated: ${formatDate(data.lastUpdated)}</span>
             <span class="article-count">${data.totalArticles} articles</span>
         `;
+        
+        // Remove existing last updated if any
+        const existingLastUpdated = document.querySelector('.last-updated');
+        if (existingLastUpdated) {
+            existingLastUpdated.remove();
+        }
+        
         document.querySelector('.news-controls').appendChild(lastUpdated);
+        
+        if (articles.length === 0) {
+            newsGrid.innerHTML = `
+                <div class="no-articles">
+                    <i class="fas fa-newspaper"></i>
+                    <p>No articles available at the moment.</p>
+                    <button onclick="loadNews()" class="retry-btn">
+                        <i class="fas fa-redo"></i> Refresh
+                    </button>
+                </div>
+            `;
+            return;
+        }
         
         displayNews(articles);
         setupNewsAnimations();
+        
     } catch (error) {
         console.error('Error loading news:', error);
-        const newsGrid = document.getElementById('newsGrid');
+        
+        // If we haven't exceeded max retries, try again
+        if (retryCount < maxRetries) {
+            setTimeout(() => {
+                loadNews(retryCount + 1);
+            }, 2000 * (retryCount + 1)); // Exponential backoff
+            
+            newsGrid.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Loading news... (Attempt ${retryCount + 1} of ${maxRetries})</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // If we've exceeded max retries, show error message
         newsGrid.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-circle"></i>
                 <p>Failed to load news. Please try again later.</p>
+                <div class="error-details">
+                    <p>${error.message}</p>
+                </div>
                 <button onclick="loadNews()" class="retry-btn">
                     <i class="fas fa-redo"></i> Retry
                 </button>

@@ -785,44 +785,124 @@ nav {
     }
 }
 
-/* Loading State */
+/* Loading and Error States */
 .news-loading {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     min-height: 200px;
+    gap: 1rem;
 }
 
 .news-loading .loading {
     width: 40px;
     height: 40px;
-    border-width: 2px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-/* No Results State */
-.news-no-results {
+.news-loading p {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 1.1rem;
+}
+
+.error-message {
     text-align: center;
     padding: 3rem 1rem;
     color: var(--text-color);
+    background: var(--bg-color);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+.error-message i {
+    font-size: 3rem;
+    color: #ef4444;
+    margin-bottom: 1rem;
     opacity: 0.7;
 }
 
-.news-no-results i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    color: var(--primary-color);
-    opacity: 0.5;
-}
-
-.news-no-results p {
+.error-message p {
     font-size: 1.1rem;
     margin-bottom: 1rem;
+    color: var(--text-color);
 }
 
-.news-no-results .btn {
+.error-details {
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    word-break: break-word;
+}
+
+.retry-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.retry-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.retry-btn i {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.retry-btn:hover i {
+    transform: rotate(180deg);
+}
+
+.no-articles {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+.no-articles i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.no-articles p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Contact Section */
