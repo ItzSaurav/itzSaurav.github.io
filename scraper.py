@@ -1,14 +1,21 @@
-import requests
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import json
+from datetime import datetime
 import os
-from datetime import datetime, timedelta
+import schedule
 import time
-import random
+import threading
 import feedparser
-from urllib.parse import urlparse, urljoin
 import socket
-import ssl
+import random
 import re
+
+app = Flask(__name__)
+CORS(app)
+
+CONTACTS_FILE = 'contacts.json'
+NEWS_FILE = 'news.json'
 
 # Set longer timeout for feedparser
 socket.setdefaulttimeout(30)
@@ -28,7 +35,7 @@ def is_valid_article(article):
     required_fields = ['title', 'url', 'publishedAt']
     return all(article.get(field) for field in required_fields)
 
-def fetch_rss_feed(url, source_name, max_retries=3):
+def fetch_rss_feed(url, max_retries=3):
     """Fetch and parse RSS feed with retry logic."""
     for attempt in range(max_retries):
         try:
@@ -37,131 +44,145 @@ def fetch_rss_feed(url, source_name, max_retries=3):
                 return feed.entries[:10]  # Get latest 10 entries
             return []
         except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(random.uniform(1, 3))  # Random delay between retries
-                continue
-            print(f"Error fetching from {source_name}: {str(e)}")
-            return []
+            if attempt == max_retries - 1:
+                print(f"Error fetching {url}: {str(e)}")
+                return []
+            time.sleep(2 ** attempt)  # Exponential backoff
 
 def get_article_date(entry):
     """Extract and parse article date from different possible fields."""
-    date_fields = ['published', 'updated', 'pubDate', 'date']
+    date_fields = ['published_parsed', 'updated_parsed', 'created_parsed']
     for field in date_fields:
-        if hasattr(entry, field):
-            try:
-                return datetime(*entry[field].timetuple()[:6])
-            except:
-                continue
-    return None
+        if hasattr(entry, field) and entry[field]:
+            return datetime(*entry[field][:6])
+    return datetime.now()
 
-def main():
-    # List of RSS feeds with their categories
-    feeds = [
-        # AI Research & Development
-        {
-            'url': 'https://arxiv.org/rss/cs.AI',
-            'name': 'arXiv AI',
-            'category': 'research'
-        },
-        {
-            'url': 'https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml',
-            'name': 'Science Daily AI',
-            'category': 'research'
-        },
-        # Industry News
-        {
-            'url': 'https://www.artificialintelligence-news.com/feed/',
-            'name': 'AI News',
-            'category': 'industry'
-        },
-        {
-            'url': 'https://www.analyticsinsight.net/category/artificial-intelligence/feed/',
-            'name': 'Analytics Insight',
-            'category': 'industry'
-        },
-        # Startups & Innovation
-        {
-            'url': 'https://www.unite.ai/feed/',
-            'name': 'Unite.AI',
-            'category': 'startups'
-        },
-        {
-            'url': 'https://www.artificialintelligence-news.com/category/startups/feed/',
-            'name': 'AI News Startups',
-            'category': 'startups'
-        },
-        # Tech News
-        {
-            'url': 'https://www.zdnet.com/news/rss.xml',
-            'name': 'ZDNet',
-            'category': 'industry'
-        },
-        {
-            'url': 'https://www.techrepublic.com/rssfeeds/articles/',
-            'name': 'TechRepublic',
-            'category': 'industry'
-        }
-    ]
+def scrape_news():
+    print(f"Starting news scrape at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Define RSS feeds
+    feeds = {
+        'research': [
+            'https://arxiv.org/rss/cs.AI',
+            'https://arxiv.org/rss/cs.LG',
+            'https://arxiv.org/rss/cs.CL'
+        ],
+        'industry': [
+            'https://www.artificialintelligence-news.com/feed/',
+            'https://www.analyticsinsight.net/feed/',
+            'https://www.unite.ai/feed/'
+        ],
+        'startups': [
+            'https://www.artificialintelligence-news.com/feed/',
+            'https://www.analyticsinsight.net/feed/'
+        ],
+        'tech': [
+            'https://www.theverge.com/rss/artificial-intelligence/index.xml',
+            'https://www.wired.com/feed/rss'
+        ]
+    }
 
-    articles = []
+    all_articles = []
     seen_urls = set()
 
-    # Get current date
-    now = datetime.now()
-    # Set time to start of day
-    today_start = datetime(now.year, now.month, now.day)
-    # Get articles from last 24 hours
-    cutoff_time = today_start - timedelta(days=1)
+    # Get articles from the last 24 hours
+    cutoff_time = datetime.now() - datetime.timedelta(hours=24)
 
-    for feed in feeds:
-        entries = fetch_rss_feed(feed['url'], feed['name'])
+    for category, urls in feeds.items():
+        for url in urls:
+            entries = fetch_rss_feed(url)
+            for entry in entries:
+                try:
+                    article_date = get_article_date(entry)
+                    if article_date < cutoff_time:
+                        continue
+
+                    url = entry.link
+                    if url in seen_urls:
+                        continue
+                    seen_urls.add(url)
+
+                    article = {
+                        'title': clean_text(entry.title),
+                        'description': clean_text(entry.description if hasattr(entry, 'description') else entry.summary),
+                        'url': url,
+                        'source': category.capitalize(),
+                        'publishedAt': article_date.strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    all_articles.append(article)
+                except Exception as e:
+                    print(f"Error processing article: {str(e)}")
+                    continue
+
+    # Sort by date and get latest 30 articles
+    all_articles.sort(key=lambda x: x['publishedAt'], reverse=True)
+    latest_articles = all_articles[:30]
+
+    # Save to JSON file
+    news_data = {
+        'articles': latest_articles,
+        'lastUpdated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    with open(NEWS_FILE, 'w') as f:
+        json.dump(news_data, f, indent=2)
+
+    print(f"News scrape completed. Found {len(latest_articles)} articles.")
+    return latest_articles
+
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+# Schedule news scraping
+schedule.every(6).hours.do(scrape_news)  # Run every 6 hours (4 times a day)
+
+# Start scheduler in a separate thread
+scheduler_thread = threading.Thread(target=run_scheduler)
+scheduler_thread.daemon = True
+scheduler_thread.start()
+
+# Initial scrape
+scrape_news()
+
+@app.route('/submit-contact', methods=['POST'])
+def submit_contact():
+    try:
+        data = request.json
+        name = data.get('name')
+        email = data.get('email')
+        message = data.get('message')
+
+        if not all([name, email, message]):
+            return jsonify({'error': 'All fields are required'}), 400
+
+        contacts = load_contacts()
         
-        for entry in entries:
-            # Get article date
-            article_date = get_article_date(entry)
-            if not article_date:
-                continue
+        # Add new contact with timestamp
+        contacts['contacts'].append({
+            'name': name,
+            'email': email,
+            'message': message,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
 
-            # Skip if article is older than 24 hours
-            if article_date < cutoff_time:
-                continue
+        save_contacts(contacts)
+        
+        return jsonify({'message': 'Contact form submitted successfully'}), 200
 
-            # Get article URL
-            url = entry.get('link', '')
-            if not url or url in seen_urls:
-                continue
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-            # Get article title and description
-            title = clean_text(entry.get('title', ''))
-            description = clean_text(entry.get('description', ''))
+def load_contacts():
+    if os.path.exists(CONTACTS_FILE):
+        with open(CONTACTS_FILE, 'r') as f:
+            return json.load(f)
+    return {'contacts': []}
 
-            # Skip if no title or description
-            if not title or not description:
-                continue
+def save_contacts(contacts):
+    with open(CONTACTS_FILE, 'w') as f:
+        json.dump(contacts, f, indent=2)
 
-            # Add to articles list
-            articles.append({
-                'title': title,
-                'description': description,
-                'url': url,
-                'source': feed['name'],
-                'category': feed['category'],
-                'date': article_date.strftime('%Y-%m-%d %H:%M:%S')
-            })
-            seen_urls.add(url)
-
-    # Sort articles by date (newest first)
-    articles.sort(key=lambda x: x['date'], reverse=True)
-
-    # Write to JSON file
-    with open('news.json', 'w', encoding='utf-8') as f:
-        json.dump({
-            'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'articles': articles[:30]  # Limit to 30 most recent articles
-        }, f, indent=2, ensure_ascii=False)
-
-    print(f"Successfully fetched {len(articles)} articles")
-    print(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(port=5000)
