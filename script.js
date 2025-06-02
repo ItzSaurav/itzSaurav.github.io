@@ -79,107 +79,225 @@ window.addEventListener('scroll', () => {
     });
 });
 
-// News loading and filtering
-let newsData = [];
-let currentPage = 1;
-const itemsPerPage = 6;
-
+// News Loading and Filtering
 async function loadNews() {
     try {
-        const response = await fetch('news.json');
-        newsData = await response.json();
-        displayNews();
+        const response = await fetch('ai_news.json');
+        const data = await response.json();
+        const articles = data.articles || [];
+        
+        // Update last updated time
+        const lastUpdated = document.createElement('div');
+        lastUpdated.className = 'last-updated';
+        lastUpdated.innerHTML = `
+            <i class="fas fa-sync-alt"></i>
+            <span>Last updated: ${formatDate(data.lastUpdated)}</span>
+            <span class="article-count">${data.totalArticles} articles</span>
+        `;
+        document.querySelector('.news-controls').appendChild(lastUpdated);
+        
+        displayNews(articles);
+        setupNewsAnimations();
     } catch (error) {
         console.error('Error loading news:', error);
-        document.getElementById('newsGrid').innerHTML = `
+        const newsGrid = document.getElementById('newsGrid');
+        newsGrid.innerHTML = `
             <div class="error-message">
-                <p>Unable to load news at this time. Please try again later.</p>
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Failed to load news. Please try again later.</p>
+                <button onclick="loadNews()" class="retry-btn">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
             </div>
         `;
     }
 }
 
-function displayNews(filteredData = newsData) {
+function displayNews(articles) {
     const newsGrid = document.getElementById('newsGrid');
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedData = filteredData.slice(startIndex, endIndex);
-
-    if (paginatedData.length === 0) {
-        newsGrid.innerHTML = `
-            <div class="no-news-message">
-                <p>No news articles found.</p>
-            </div>
-        `;
-        return;
-    }
-
-    newsGrid.innerHTML = paginatedData.map(article => `
-        <div class="news-card fade-in">
-            <div class="news-card-content">
+    newsGrid.innerHTML = '';
+    
+    articles.forEach((article, index) => {
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        card.style.animationDelay = `${index * 0.1}s`;
+        
+        const imageHtml = article.image ? 
+            `<div class="news-image">
+                <img src="${article.image}" alt="${article.title}" loading="lazy">
+            </div>` : '';
+        
+        card.innerHTML = `
+            ${imageHtml}
+            <div class="news-content">
+                <div class="news-category ${article.category}">${article.category}</div>
                 <h3>${article.title}</h3>
                 <p>${article.description}</p>
-                <div class="meta">
-                    <span>${article.source}</span>
-                    <span>${new Date(article.publishedAt).toLocaleDateString()}</span>
+                <div class="news-meta">
+                    <div class="meta-left">
+                        <span class="news-source">
+                            <i class="fas fa-newspaper"></i>
+                            ${article.source}
+                        </span>
+                        <span class="news-date">
+                            <i class="far fa-clock"></i>
+                            ${formatDate(article.publishedAt)}
+                        </span>
+                    </div>
+                    <div class="meta-right">
+                        <span class="reading-time">
+                            <i class="fas fa-book-reader"></i>
+                            ${article.readingTime} min read
+                        </span>
+                    </div>
                 </div>
-                <a href="${article.url}" target="_blank" class="btn secondary">Read More</a>
+                <a href="${article.url}" target="_blank" class="read-more">
+                    Read More <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
-        </div>
-    `).join('');
-
-    updatePagination(filteredData.length);
-}
-
-function updatePagination(totalItems) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
-    document.getElementById('prevPage').disabled = currentPage === 1;
-    document.getElementById('nextPage').disabled = currentPage === totalPages;
-}
-
-// News filtering
-const searchInput = document.getElementById('newsSearch');
-const filterButtons = document.querySelectorAll('.news-filters .filter-btn');
-
-searchInput.addEventListener('input', filterNews);
-filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        filterButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        filterNews();
+        `;
+        newsGrid.appendChild(card);
     });
-});
+}
 
-function filterNews() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const activeFilter = document.querySelector('.news-filters .filter-btn.active').dataset.filter;
-
-    const filteredData = newsData.filter(article => {
-        const matchesSearch = article.title.toLowerCase().includes(searchTerm) ||
-                            article.description.toLowerCase().includes(searchTerm);
-        const matchesFilter = activeFilter === 'all' || article.source.toLowerCase().includes(activeFilter);
-        return matchesSearch && matchesFilter;
+function setupNewsAnimations() {
+    const cards = document.querySelectorAll('.news-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, {
+        threshold: 0.1
     });
 
-    currentPage = 1;
-    displayNews(filteredData);
+    cards.forEach(card => observer.observe(card));
 }
 
-// Pagination
-document.getElementById('prevPage').addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        displayNews();
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    // If less than 24 hours ago, show relative time
+    if (diff < 24 * 60 * 60 * 1000) {
+        const hours = Math.floor(diff / (60 * 60 * 1000));
+        if (hours === 0) {
+            const minutes = Math.floor(diff / (60 * 1000));
+            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+        }
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
     }
-});
+    
+    // Otherwise show full date
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
-document.getElementById('nextPage').addEventListener('click', () => {
-    const totalPages = Math.ceil(newsData.length / itemsPerPage);
-    if (currentPage < totalPages) {
-        currentPage++;
-        displayNews();
+// Enhanced search functionality
+function searchNews(query) {
+    const newsCards = document.querySelectorAll('.news-card');
+    const searchTerm = query.toLowerCase();
+    let visibleCount = 0;
+    
+    newsCards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const description = card.querySelector('p').textContent.toLowerCase();
+        const category = card.querySelector('.news-category').textContent.toLowerCase();
+        const source = card.querySelector('.news-source').textContent.toLowerCase();
+        
+        const isVisible = title.includes(searchTerm) || 
+                         description.includes(searchTerm) ||
+                         category.includes(searchTerm) ||
+                         source.includes(searchTerm);
+        
+        card.style.display = isVisible ? 'block' : 'none';
+        if (isVisible) visibleCount++;
+    });
+    
+    // Show no results message if needed
+    const noResults = document.querySelector('.no-results');
+    if (visibleCount === 0) {
+        if (!noResults) {
+            const message = document.createElement('div');
+            message.className = 'no-results';
+            message.innerHTML = `
+                <i class="fas fa-search"></i>
+                <p>No articles found matching "${query}"</p>
+                <button onclick="clearSearch()" class="clear-search">
+                    Clear Search
+                </button>
+            `;
+            document.getElementById('newsGrid').appendChild(message);
+        }
+    } else if (noResults) {
+        noResults.remove();
     }
+}
+
+function clearSearch() {
+    document.getElementById('newsSearch').value = '';
+    document.querySelectorAll('.news-card').forEach(card => {
+        card.style.display = 'block';
+    });
+    document.querySelector('.no-results')?.remove();
+}
+
+// Enhanced filter functionality
+function filterNews(category) {
+    const newsCards = document.querySelectorAll('.news-card');
+    const filterButtons = document.querySelectorAll('.news-filters .filter-btn');
+    
+    filterButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === category);
+    });
+    
+    newsCards.forEach(card => {
+        if (category === 'all' || card.querySelector('.news-category').textContent === category) {
+            card.style.display = 'block';
+            card.classList.add('filtered');
+        } else {
+            card.style.display = 'none';
+            card.classList.remove('filtered');
+        }
+    });
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Load news when page loads
+    loadNews();
+    
+    // Filter buttons
+    document.querySelectorAll('.news-filters .filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterNews(btn.dataset.filter);
+        });
+    });
+    
+    // Search input with debounce
+    const searchInput = document.getElementById('newsSearch');
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchNews(e.target.value);
+        }, 300);
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
 });
 
 // Project filtering
@@ -259,11 +377,6 @@ if (contactForm) {
         }
     });
 }
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadNews();
-});
 
 // Scroll Reveal Animation
 function revealOnScroll() {
