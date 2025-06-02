@@ -8,22 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Primary Meta Tags -->
-<meta name="title" content="ItzSaurav Portfolio">
-<meta name="description" content="Personal portfolio and project showcase for ItzSaurav.">
-
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://itzsaurav.github.io/">
-<meta property="og:title" content="ItzSaurav Portfolio">
-<meta property="og:description" content="Personal portfolio and project showcase for ItzSaurav.">
-<meta property="og:image" content="https://itzsaurav.github.io/og-image.png">
-
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://itzsaurav.github.io/">
-<meta property="twitter:title" content="ItzSaurav Portfolio">
-<meta property="twitter:description" content="Personal portfolio and project showcase for ItzSaurav.">
-<meta property="twitter:image" content="https://itzsaurav.github.io/og-image.png">
+    <meta name="title" content="ItzSaurav Portfolio">
+    <meta name="description" content="Personal portfolio and project showcase for ItzSaurav.">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itzsaurav.github.io/">
+    <meta property="og:title" content="ItzSaurav Portfolio">
+    <meta property="og:description" content="Personal portfolio and project showcase for ItzSaurav.">
+    <meta property="og:image" content="https://itzsaurav.github.io/og-image.png">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://itzsaurav.github.io/">
+    <meta property="twitter:title" content="ItzSaurav Portfolio">
+    <meta property="twitter:description" content="Personal portfolio and project showcase for ItzSaurav.">
+    <meta property="twitter:image" content="https://itzsaurav.github.io/og-image.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -37,10 +35,23 @@
                     <a href="#news">AI News</a>
                     <a href="#contact">Contact</a>
                 </div>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon"></i>
+                <div class="nav-buttons">
+                    <div class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <button class="mobile-menu-btn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                 </div>
             </nav>
+            <div class="mobile-menu">
+                <a href="#about">About</a>
+                <a href="#projects">Projects</a>
+                <a href="#news">AI News</a>
+                <a href="#contact">Contact</a>
+            </div>
         </header>
 
         <section id="hero" class="hero">
@@ -52,9 +63,9 @@
                     <a href="#contact" class="btn secondary">Contact Me</a>
                 </div>
                 <div class="social-links">
-                    <a href="https://github.com/ItzSaurav" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="https://linkedin.com/in/itzsaurav" target="_blank"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://twitter.com/itzsaurav" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://github.com/ItzSaurav" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://linkedin.com/in/itzsaurav" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://twitter.com/itzsaurav" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="scroll-indicator">
@@ -70,10 +81,13 @@
         </section>
 
         <section id="about" class="about">
-            <h2>About Me</h2>
+            <div class="section-header">
+                <h2>About Me</h2>
+                <div class="section-line"></div>
+            </div>
             <div class="about-content">
                 <div class="about-text">
-                    <p>I'm a passionate developer and AI enthusiast, constantly exploring the intersection of technology and innovation.</p>
+                    <p>I'm a passionate developer and AI enthusiast, constantly exploring the intersection of technology and innovation. With a strong foundation in both development and artificial intelligence, I create solutions that push the boundaries of what's possible.</p>
                     <div class="skills">
                         <h3>Skills</h3>
                         <div class="skill-tags">
@@ -82,6 +96,9 @@
                             <span class="skill-tag">AI/ML</span>
                             <span class="skill-tag">Web Development</span>
                             <span class="skill-tag">Data Science</span>
+                            <span class="skill-tag">React</span>
+                            <span class="skill-tag">Node.js</span>
+                            <span class="skill-tag">TensorFlow</span>
                         </div>
                     </div>
                 </div>
@@ -89,7 +106,10 @@
         </section>
 
         <section id="projects" class="projects">
-            <h2>Featured Projects</h2>
+            <div class="section-header">
+                <h2>Featured Projects</h2>
+                <div class="section-line"></div>
+            </div>
             <div class="project-filters">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="web">Web</button>
@@ -102,7 +122,10 @@
         </section>
 
         <section id="news" class="news">
-            <h2>Latest AI News</h2>
+            <div class="section-header">
+                <h2>Latest AI News</h2>
+                <div class="section-line"></div>
+            </div>
             <div class="news-controls">
                 <div class="search-box">
                     <input type="text" id="newsSearch" placeholder="Search news...">
@@ -126,19 +149,22 @@
         </section>
 
         <section id="contact" class="contact">
-            <h2>Get in Touch</h2>
+            <div class="section-header">
+                <h2>Get in Touch</h2>
+                <div class="section-line"></div>
+            </div>
             <div class="contact-content">
                 <form id="contactForm" class="contact-form">
                     <div class="form-group">
-                        <input type="text" id="name" required>
+                        <input type="text" id="name" required placeholder=" ">
                         <label for="name">Name</label>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="email" required>
+                        <input type="email" id="email" required placeholder=" ">
                         <label for="email">Email</label>
                     </div>
                     <div class="form-group">
-                        <textarea id="message" required></textarea>
+                        <textarea id="message" required placeholder=" "></textarea>
                         <label for="message">Message</label>
                     </div>
                     <button type="submit" class="btn primary">Send Message</button>
@@ -166,9 +192,9 @@
                     <a href="#contact">Contact</a>
                 </div>
                 <div class="footer-social">
-                    <a href="https://github.com/ItzSaurav" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="https://linkedin.com/in/itzsaurav" target="_blank"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://twitter.com/itzsaurav" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://github.com/ItzSaurav" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://linkedin.com/in/itzsaurav" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://twitter.com/itzsaurav" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="footer-bottom">
