@@ -290,3 +290,105 @@ window.addEventListener('scroll', revealOnScroll);
 
 // Initial check for elements in view
 revealOnScroll();
+
+// Chatbot functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const chatbotToggle = document.querySelector('.chatbot-toggle');
+    const chatbotWindow = document.querySelector('.chatbot-window');
+    const closeChatbot = document.querySelector('.close-chatbot');
+    const chatInput = document.getElementById('chatInput');
+    const sendMessage = document.getElementById('sendMessage');
+    const messagesContainer = document.querySelector('.chatbot-messages');
+    const notificationDot = document.querySelector('.notification-dot');
+
+    // Toggle chatbot window
+    chatbotToggle.addEventListener('click', () => {
+        chatbotWindow.classList.toggle('active');
+        notificationDot.style.display = 'none';
+    });
+
+    // Close chatbot window
+    closeChatbot.addEventListener('click', () => {
+        chatbotWindow.classList.remove('active');
+    });
+
+    // Send message function
+    async function sendChatMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Add user message to chat
+        addMessage(message, 'user');
+        chatInput.value = '';
+
+        // Add loading message
+        const loadingMessage = addMessage('...', 'bot', true);
+
+        try {
+            const response = await fetch('http://localhost:5001/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message }),
+            });
+
+            const data = await response.json();
+            
+            // Remove loading message
+            loadingMessage.remove();
+
+            // Add bot response
+            if (data.error) {
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            } else {
+                addMessage(data.response || 'I apologize, but I could not process your request.', 'bot');
+            }
+        } catch (error) {
+            loadingMessage.remove();
+            addMessage('Sorry, I could not connect to the server. Please try again later.', 'bot');
+        }
+    }
+
+    // Add message to chat
+    function addMessage(content, type, isLoading = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}${isLoading ? ' loading' : ''}`;
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.textContent = content;
+        
+        messageDiv.appendChild(messageContent);
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        return messageDiv;
+    }
+
+    // Send message on button click
+    sendMessage.addEventListener('click', sendChatMessage);
+
+    // Send message on Enter key
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendChatMessage();
+        }
+    });
+
+    // Show notification dot when chatbot is closed
+    function showNotification() {
+        if (!chatbotWindow.classList.contains('active')) {
+            notificationDot.style.display = 'block';
+        }
+    }
+
+    // Simulate bot greeting after 5 seconds
+    setTimeout(() => {
+        if (!chatbotWindow.classList.contains('active')) {
+            showNotification();
+        }
+    }, 5000);
+});
