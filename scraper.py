@@ -1,85 +1,185 @@
 import requests
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
+from bs4 import BeautifulSoup
+import random
+import re
 
-def fetch_gnews(api_key, query, lang='en', max_results=10, sort_by='publishedAt'):
-    """Fetches news articles using the GNews API."""
+def clean_text(text):
+    """Clean and normalize text."""
+    if not text:
+        return ""
+    # Remove extra whitespace and newlines
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def fetch_techcrunch():
+    """Fetch AI news from TechCrunch."""
     articles = []
-    # GNews API endpoint for searching news
-    url = f"https://gnews.io/api/v4/search?q={query}&lang={lang}&max={max_results}&sortby={sort_by}&token={api_key}"
-
     try:
-        response = requests.get(url)
-        response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
-        data = response.json()
-
-        for article_data in data.get('articles', []):
-            title = article_data.get('title')
-            description = article_data.get('description')
-            url = article_data.get('url')
-            source_name = article_data.get('source', {}).get('name', 'GNews API')
-            published_at_str = article_data.get('publishedAt')
-
-            # GNews 'publishedAt' is usually in ISO 8601 format, which is perfect.
-            # Use current time as a fallback if published_at_str is missing.
-            published_at = published_at_str if published_at_str else datetime.now().isoformat() + "Z"
-
-            # Ensure we have essential data before adding the article
-            if title and url:
+        url = "https://techcrunch.com/tag/artificial-intelligence/"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        for article in soup.find_all('article', class_='post-block')[:10]:
+            try:
+                title_elem = article.find('h2', class_='post-block__title')
+                if not title_elem:
+                    continue
+                    
+                title = clean_text(title_elem.get_text())
+                link = title_elem.find('a')['href']
+                
+                desc_elem = article.find('div', class_='post-block__content')
+                description = clean_text(desc_elem.get_text()) if desc_elem else ""
+                
+                time_elem = article.find('time')
+                published_at = time_elem['datetime'] if time_elem else datetime.now().isoformat()
+                
                 articles.append({
                     "title": title,
-                    "description": description if description else "No description available.",
-                    "url": url,
-                    "source": source_name,
+                    "description": description,
+                    "url": link,
+                    "source": "TechCrunch",
                     "publishedAt": published_at
                 })
-        print(f"Fetched {len(articles)} articles from GNews API for query '{query}'.")
+            except Exception as e:
+                print(f"Error parsing TechCrunch article: {e}")
+                continue
+                
+    except Exception as e:
+        print(f"Error fetching from TechCrunch: {e}")
+    return articles
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching from GNews API: {e}")
-    except json.decoder.JSONDecodeError as e:
-        print(f"Error decoding JSON response from GNews API: {e}")
-        # If JSON decoding fails, try to print the raw response for debugging
-        if 'response' in locals() and hasattr(response, 'text'):
-            print(f"Raw API Response Content: {response.text}")
+def fetch_venturebeat():
+    """Fetch AI news from VentureBeat."""
+    articles = []
+    try:
+        url = "https://venturebeat.com/category/ai/"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        for article in soup.find_all('article', class_='ArticleListing')[:10]:
+            try:
+                title_elem = article.find('h2', class_='ArticleListing-title')
+                if not title_elem:
+                    continue
+                    
+                title = clean_text(title_elem.get_text())
+                link = title_elem.find('a')['href']
+                
+                desc_elem = article.find('div', class_='ArticleListing-excerpt')
+                description = clean_text(desc_elem.get_text()) if desc_elem else ""
+                
+                time_elem = article.find('time')
+                published_at = time_elem['datetime'] if time_elem else datetime.now().isoformat()
+                
+                articles.append({
+                    "title": title,
+                    "description": description,
+                    "url": link,
+                    "source": "VentureBeat",
+                    "publishedAt": published_at
+                })
+            except Exception as e:
+                print(f"Error parsing VentureBeat article: {e}")
+                continue
+                
+    except Exception as e:
+        print(f"Error fetching from VentureBeat: {e}")
+    return articles
+
+def fetch_artificialintelligence_news():
+    """Fetch news from artificialintelligence-news.com."""
+    articles = []
+    try:
+        url = "https://www.artificialintelligence-news.com/"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        for article in soup.find_all('article')[:10]:
+            try:
+                title_elem = article.find('h2', class_='entry-title')
+                if not title_elem:
+                    continue
+                    
+                title = clean_text(title_elem.get_text())
+                link = title_elem.find('a')['href']
+                
+                desc_elem = article.find('div', class_='entry-content')
+                description = clean_text(desc_elem.get_text()) if desc_elem else ""
+                
+                time_elem = article.find('time')
+                published_at = time_elem['datetime'] if time_elem else datetime.now().isoformat()
+                
+                articles.append({
+                    "title": title,
+                    "description": description,
+                    "url": link,
+                    "source": "AI News",
+                    "publishedAt": published_at
+                })
+            except Exception as e:
+                print(f"Error parsing AI News article: {e}")
+                continue
+                
+    except Exception as e:
+        print(f"Error fetching from AI News: {e}")
     return articles
 
 def main():
     all_articles = []
-    print("Starting GNews API news fetching process...")
+    print("Starting news fetching process...")
 
-    # Retrieve the GNews API key from GitHub Secrets (environment variable)
-    gnews_api_key = os.getenv('GNEWS_API_KEY')
-    if not gnews_api_key:
-        print("Error: GNEWS_API_KEY environment variable not set. Please add it to GitHub Secrets.")
-        # Ensure an empty news.json is still created to prevent website errors
-        with open('news.json', 'w', encoding='utf-8') as f:
-            json.dump([], f)
-        return
+    # Fetch from all sources
+    sources = [
+        fetch_techcrunch,
+        fetch_venturebeat,
+        fetch_artificialintelligence_news
+    ]
+    
+    for source in sources:
+        try:
+            articles = source()
+            all_articles.extend(articles)
+            # Add a small delay between requests to be respectful
+            time.sleep(random.uniform(1, 2))
+        except Exception as e:
+            print(f"Error fetching from source: {e}")
+            continue
 
-    # Fetch AI news using the GNews API
-    # The query "artificial intelligence news" is broad.
-    # You can adjust 'max_results' up to 10 per query for the free tier.
-    # You can make multiple calls with different queries if needed, but watch the 100 req/day limit.
-    all_articles.extend(fetch_gnews(gnews_api_key, "artificial intelligence news", max_results=10))
-
-    # --- Standard sorting and de-duplication (this part remains the same) ---
     # Sort articles by published date, newest first
-    # Use a safe fallback for comparison if 'publishedAt' is missing or invalid
-    all_articles.sort(key=lambda x: x.get('publishedAt', datetime.min.isoformat() + "Z"), reverse=True)
+    all_articles.sort(key=lambda x: x.get('publishedAt', datetime.min.isoformat()), reverse=True)
 
     # Remove duplicates based on URL
     seen_urls = set()
     unique_articles = []
     for article in all_articles:
-        # Only process articles with a valid URL and if it hasn't been seen before
         if article.get('url') and article['url'] not in seen_urls:
-            unique_articles.append(article)
-            seen_urls.add(article['url'])
+            # Only include articles from the last 24 hours
+            try:
+                published_at = datetime.fromisoformat(article['publishedAt'].replace('Z', '+00:00'))
+                if datetime.now(published_at.tzinfo) - published_at <= timedelta(hours=24):
+                    unique_articles.append(article)
+                    seen_urls.add(article['url'])
+            except:
+                continue
 
-    # Limit to a reasonable number of articles for display on the page
-    # Adjust as needed, e.g., if you fetch more than 30 unique articles
+    # Limit to the most recent 30 articles
     final_articles = unique_articles[:30]
 
     # Write the aggregated news data to news.json
@@ -89,7 +189,6 @@ def main():
         print(f"Successfully generated news.json with {len(final_articles)} articles.")
     except Exception as e:
         print(f"Error writing news.json: {e}")
-        # In case of write error, ensure an empty JSON is still created to avoid breaking the site
         with open('news.json', 'w', encoding='utf-8') as f:
             json.dump([], f)
         print("Wrote empty news.json due to error.")

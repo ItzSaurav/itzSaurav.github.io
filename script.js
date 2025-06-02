@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const loadingMessage = document.querySelector(".loading-message");
     const errorMessage = document.getElementById("error-message");
     const noNewsMessage = document.getElementById("no-news-message");
+    let lastFetchTime = null;
+    const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
     // Set current year in footer
     document.getElementById("current-year").textContent = new Date().getFullYear();
@@ -20,81 +22,127 @@ document.addEventListener("DOMContentLoaded", function() {
         if (element) element.style.display = 'block';
     }
 
-    // Fetch news data
-    fetch("news.json")
-        .then(response => {
+    // Function to format relative time
+    function getRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Function to create article element
+    function createArticleElement(article) {
+        const articleDiv = document.createElement("div");
+        articleDiv.classList.add("news-article");
+
+        const articleContent = document.createElement("div");
+        articleContent.classList.add("article-content");
+
+        const title = document.createElement("h3");
+        title.classList.add("article-title");
+        const link = document.createElement("a");
+        link.href = article.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = article.title || "No Title Available";
+        title.appendChild(link);
+        articleContent.appendChild(title);
+
+        if (article.description) {
+            const description = document.createElement("p");
+            description.classList.add("article-description");
+            description.textContent = article.description;
+            articleContent.appendChild(description);
+        }
+
+        const meta = document.createElement("p");
+        meta.classList.add("article-meta");
+        
+        const sourceSpan = document.createElement("span");
+        sourceSpan.textContent = article.source ? `Source: ${article.source}` : '';
+        
+        const timeSpan = document.createElement("span");
+        timeSpan.textContent = article.publishedAt ? getRelativeTime(article.publishedAt) : 'Date N/A';
+        
+        meta.appendChild(sourceSpan);
+        meta.appendChild(timeSpan);
+        articleContent.appendChild(meta);
+
+        articleDiv.appendChild(articleContent);
+        return articleDiv;
+    }
+
+    // Function to fetch and display news
+    async function fetchAndDisplayNews() {
+        try {
+            showMessage(loadingMessage);
+            const response = await fetch("news.json");
+            
             if (!response.ok) {
-                // If news.json is not found or other HTTP error
-                throw new Error(`HTTP error! Status: ${response.status}. Could not fetch news data.`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            return response.json();
-        })
-        .then(data => {
-            hideAllMessages(); // Hide loading message once data is fetched
+            
+            const data = await response.json();
+            hideAllMessages();
 
             if (data && data.length > 0) {
-                newsContainer.innerHTML = ''; // Clear any existing content (like the loading message)
-
+                newsContainer.innerHTML = '';
                 data.forEach(article => {
-                    const articleDiv = document.createElement("div");
-                    articleDiv.classList.add("news-article");
-
-                    const articleContent = document.createElement("div");
-                    articleContent.classList.add("article-content");
-
-                    const title = document.createElement("h3"); // Changed to h3 for semantic hierarchy
-                    title.classList.add("article-title");
-                    const link = document.createElement("a");
-                    link.href = article.url;
-                    link.target = "_blank"; // Open in new tab
-                    link.rel = "noopener noreferrer"; // Security best practice for target="_blank"
-                    link.textContent = article.title || "No Title Available"; // Fallback text
-                    title.appendChild(link);
-                    articleContent.appendChild(title);
-
-                    if (article.description) {
-                        const description = document.createElement("p");
-                        description.classList.add("article-description");
-                        description.textContent = article.description;
-                        articleContent.appendChild(description);
-                    }
-
-                    const meta = document.createElement("p");
-                    meta.classList.add("article-meta");
-                    let metaText = '';
-
-                    if (article.source) {
-                        metaText += `Source: ${article.source}`;
-                    }
-
-                    if (article.publishedAt) {
-                        try {
-                            const date = new Date(article.publishedAt);
-                            // Format date nicely, e.g., "May 28, 2025" or "5/28/2025"
-                            // Using toLocaleDateString for user-friendly format
-                            metaText += `${metaText ? ' | ' : ''}Published: ${date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-                        } catch (e) {
-                            console.warn("Invalid date format:", article.publishedAt, e);
-                            // Fallback if date parsing fails
-                            metaText += `${metaText ? ' | ' : ''}Published: Date N/A`;
-                        }
-                    } else {
-                        metaText += `${metaText ? ' | ' : ''}Published: Date N/A`;
-                    }
-                    meta.textContent = metaText;
-                    articleContent.appendChild(meta);
-
-                    articleDiv.appendChild(articleContent);
-                    newsContainer.appendChild(articleDiv);
+                    const articleElement = createArticleElement(article);
+                    newsContainer.appendChild(articleElement);
                 });
             } else {
-                showMessage(noNewsMessage); // Show "No news found" message
+                showMessage(noNewsMessage);
             }
-        })
-        .catch(error => {
+            
+            lastFetchTime = new Date();
+        } catch (error) {
             console.error("Error fetching or parsing news:", error);
-            // Display an error message to the user
             showMessage(errorMessage);
-            newsContainer.innerHTML = ''; // Clear loading message in case of error
+            newsContainer.innerHTML = '';
+        }
+    }
+
+    // Initial fetch
+    fetchAndDisplayNews();
+
+    // Set up periodic refresh
+    setInterval(() => {
+        if (!lastFetchTime || (new Date() - lastFetchTime) >= REFRESH_INTERVAL) {
+            fetchAndDisplayNews();
+        }
+    }, REFRESH_INTERVAL);
+
+    // Add refresh button functionality
+    const refreshButton = document.createElement("button");
+    refreshButton.classList.add("refresh-button");
+    refreshButton.innerHTML = "🔄 Refresh News";
+    refreshButton.addEventListener("click", fetchAndDisplayNews);
+    document.querySelector(".section-title").appendChild(refreshButton);
+
+    // Add smooth scroll to top button
+    const scrollButton = document.createElement("button");
+    scrollButton.classList.add("scroll-top-button");
+    scrollButton.innerHTML = "↑";
+    scrollButton.style.display = "none";
+    document.body.appendChild(scrollButton);
+
+    window.addEventListener("scroll", () => {
+        if (window.pageYOffset > 300) {
+            scrollButton.style.display = "block";
+        } else {
+            scrollButton.style.display = "none";
+        }
+    });
+
+    scrollButton.addEventListener("click", () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
         });
+    });
 });
