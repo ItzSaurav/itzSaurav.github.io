@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Activate virtual environment if you're using one
+# Activate virtual environment (uncomment if using venv)
 # source venv/bin/activate
 
 # Install required packages
-pip install requests feedparser beautifulsoup4 schedule
+python3 -m pip install requests feedparser beautifulsoup4 schedule
 
-# Run the news updater
-python news_updater.py > news_updater.log 2>&1 &
+# Run the news updater in the background
+python3 news_updater.py > news_updater.log 2>&1 &
 
 # Save the process ID
 echo $! > news_updater.pid
