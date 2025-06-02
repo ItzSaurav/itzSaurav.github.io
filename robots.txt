@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Sitemap: https://itzsaurav.github.io/sitemap.xml
+
+# Disallow admin and private directories
+Disallow: /admin/
+Disallow: /private/
+Disallow: /temp/ 
